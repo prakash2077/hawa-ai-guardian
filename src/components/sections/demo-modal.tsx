@@ -14,12 +14,17 @@ interface DemoModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type ChatMessage = 
+  | { sender: "user"; content: string }
+  | { sender: "ai"; content: string; status?: "verified" | "hallucination" | "filtered" }
+  | { sender: "hawa"; content: string };
+
 export function DemoModal({ open, onOpenChange }: DemoModalProps) {
   const [sensitivity, setSensitivity] = useState([50]);
   const [userMessage, setUserMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState([
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
-      sender: "hawa" as const,
+      sender: "hawa",
       content: "Welcome to HAWA Guardian! Ask me anything, and I'll ensure you get verified information.",
     }
   ]);
@@ -29,31 +34,31 @@ export function DemoModal({ open, onOpenChange }: DemoModalProps) {
     
     // Add user message to chat
     setChatHistory(prev => [...prev, {
-      sender: "user" as const,
+      sender: "user",
       content: userMessage
     }]);
     
     // Simulate AI response with hallucination
     setTimeout(() => {
       setChatHistory(prev => [...prev, {
-        sender: "ai" as const,
+        sender: "ai",
         content: "Studies show that drinking alkaline water during pregnancy can reduce morning sickness by 75% and boost your immune system significantly.",
-        status: "hallucination" as const
+        status: "hallucination"
       }]);
       
       // Simulate HAWA correction
       setTimeout(() => {
         setChatHistory(prev => [...prev, {
-          sender: "hawa" as const,
+          sender: "hawa",
           content: "⚠️ The previous response contains unverified claims about alkaline water benefits during pregnancy. There is limited scientific evidence supporting these specific benefits for pregnant women."
         }]);
         
         // Simulate corrected AI response
         setTimeout(() => {
           setChatHistory(prev => [...prev, {
-            sender: "ai" as const,
+            sender: "ai",
             content: "While alkaline water is generally considered safe to drink during pregnancy, there is limited scientific evidence for specific benefits like reducing morning sickness or boosting immune function. It's important to maintain proper hydration during pregnancy, but regular water is equally effective. Always consult with your healthcare provider about dietary changes during pregnancy.",
-            status: "verified" as const
+            status: "verified"
           }]);
         }, 1500);
       }, 1500);
@@ -183,7 +188,7 @@ export function DemoModal({ open, onOpenChange }: DemoModalProps) {
                   key={index}
                   sender={message.sender}
                   content={message.content}
-                  status={message.hasOwnProperty('status') ? (message as any).status : undefined}
+                  status={message.sender === "ai" ? (message as any).status : undefined}
                 />
               ))}
             </div>
