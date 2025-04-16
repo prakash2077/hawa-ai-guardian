@@ -31,11 +31,11 @@ export function Navbar() {
           <Link to="/" className="flex items-center gap-2">
             <Shield className={cn(
               "transition-colors duration-300",
-              scrolled ? "text-primary" : "text-white"
+              scrolled ? "text-primary" : "text-violet-600"
             )} />
             <span className={cn(
               "font-sora font-bold text-xl transition-colors duration-300",
-              scrolled ? "text-slate-800" : "text-white"
+              scrolled ? "text-slate-800" : "text-black"
             )}>
               HAWA
             </span>
@@ -47,7 +47,7 @@ export function Navbar() {
               href="#walkthrough" 
               className={cn(
                 "font-medium transition-colors duration-300",
-                scrolled ? "text-slate-600 hover:text-primary" : "text-white hover:text-white"
+                scrolled ? "text-slate-600 hover:text-primary" : "text-slate-600 hover:text-slate-600"
               )}
             >
               How It Works
@@ -56,7 +56,7 @@ export function Navbar() {
               href="#features" 
               className={cn(
                 "font-medium transition-colors duration-300",
-                scrolled ? "text-slate-600 hover:text-primary" : "text-white hover:text-white"
+                scrolled ? "text-slate-600 hover:text-primary" : "text-slate-600 hover:text-slate-600"
               )}
             >
               Features
@@ -65,7 +65,7 @@ export function Navbar() {
               href="#why" 
               className={cn(
                 "font-medium transition-colors duration-300",
-                scrolled ? "text-slate-600 hover:text-primary" : "text-white hover:text-white"
+                scrolled ? "text-slate-600 hover:text-primary" : "text-slate-600 hover:text-slate-600"
               )}
             >
               Why HAWA
