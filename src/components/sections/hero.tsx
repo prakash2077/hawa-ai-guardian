@@ -1,21 +1,9 @@
 
 import { ButtonEffect } from "@/components/ui/button-effect";
 import { Shield, Video } from "lucide-react";
-import { useState } from "react";
-import { DemoModal } from "./demo-modal";
+import { Link } from "react-router-dom";
 
 export function HeroSection() {
-  const [demoOpen, setDemoOpen] = useState(false);
-  
-  const scrollToTryIt = () => {
-    const tryItSection = document.getElementById('try-it-section');
-    if (tryItSection) {
-      tryItSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      setDemoOpen(true);
-    }
-  };
-  
   return (
     <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-28">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#e5deff_1px,transparent_1px),linear-gradient(to_bottom,#e5deff_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
@@ -47,11 +35,11 @@ export function HeroSection() {
             <ButtonEffect 
               size="lg" 
               sparkles 
-              onClick={() => setDemoOpen(true)}
+              asChild
             >
-              <span className="flex items-center gap-2">
+              <Link to="/try-it" className="flex items-center gap-2">
                 Try It 💬
-              </span>
+              </Link>
             </ButtonEffect>
             <ButtonEffect size="lg" variant="outline">
               <span className="flex items-center gap-2">
@@ -87,8 +75,6 @@ export function HeroSection() {
           </div>
         </div>
       </div>
-      
-      <DemoModal open={demoOpen} onOpenChange={setDemoOpen} />
     </section>
   );
 }

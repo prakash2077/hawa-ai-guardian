@@ -3,11 +3,11 @@ import { Shield } from "lucide-react";
 import { ButtonEffect } from "@/components/ui/button-effect";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [demoOpen, setDemoOpen] = useState(false);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -17,23 +17,6 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  
-  const openTryIt = () => {
-    // Close mobile menu if open
-    if (mobileMenuOpen) {
-      setMobileMenuOpen(false);
-    }
-    
-    // Check if the Try It section exists
-    const tryItSection = document.getElementById('try-it-section');
-    if (tryItSection) {
-      tryItSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // Dispatch custom event that will be caught by the Index page
-      const event = new CustomEvent('openTryIt');
-      window.dispatchEvent(event);
-    }
-  };
   
   return (
     <header
@@ -45,7 +28,7 @@ export function Navbar() {
       <div className="container px-4 mx-auto">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Shield className={cn(
               "transition-colors duration-300",
               scrolled ? "text-primary" : "text-white"
@@ -56,7 +39,7 @@ export function Navbar() {
             )}>
               HAWA
             </span>
-          </a>
+          </Link>
           
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -87,7 +70,9 @@ export function Navbar() {
             >
               Why HAWA
             </a>
-            <ButtonEffect size="sm" onClick={openTryIt}>Try It 💬</ButtonEffect>
+            <ButtonEffect size="sm" asChild>
+              <Link to="/try-it">Try It 💬</Link>
+            </ButtonEffect>
           </nav>
           
           {/* Mobile Menu Button */}
@@ -131,7 +116,9 @@ export function Navbar() {
             >
               Why HAWA
             </a>
-            <ButtonEffect size="sm" className="w-full" onClick={openTryIt}>Try It 💬</ButtonEffect>
+            <ButtonEffect size="sm" className="w-full" asChild onClick={() => setMobileMenuOpen(false)}>
+              <Link to="/try-it">Try It 💬</Link>
+            </ButtonEffect>
           </nav>
         </div>
       )}
