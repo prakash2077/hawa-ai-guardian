@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Footer } from "@/components/layout/footer";
+import { toast } from "sonner";
+import { ButtonEffect } from "@/components/ui/button-effect";
 
 type ChatMessage = 
   | { sender: "user"; content: string }
@@ -79,6 +80,12 @@ const TryIt = () => {
             content: "While alkaline water is generally considered safe to drink during pregnancy, there is limited scientific evidence for specific benefits like reducing morning sickness or boosting immune function. It's important to maintain proper hydration during pregnancy, but regular water is equally effective. Always consult with your healthcare provider about dietary changes during pregnancy.",
             status: "verified"
           }]);
+
+          // Show toast notification
+          toast("Guardian has identified and corrected a potential hallucination", {
+            description: "HAWA verified the information for accuracy",
+            icon: <Shield className="h-4 w-4 text-primary" />
+          });
         }, 1500);
       }, 1500);
     }, 1000);
@@ -98,6 +105,10 @@ const TryIt = () => {
       
       recognition.onstart = () => {
         setIsListening(true);
+        toast("Listening...", {
+          description: "Speak clearly into your microphone",
+          icon: <Mic className="h-4 w-4 animate-pulse" />
+        });
       };
       
       recognition.onresult = (event) => {
@@ -111,6 +122,11 @@ const TryIt = () => {
       recognition.onerror = (event) => {
         console.error('Speech recognition error', event.error);
         setIsListening(false);
+        toast("Recognition Error", {
+          description: `Error: ${event.error}. Please try again.`,
+          icon: <ShieldAlert className="h-4 w-4 text-destructive" />,
+          variant: "destructive"
+        });
       };
       
       recognition.onend = () => {
@@ -120,7 +136,11 @@ const TryIt = () => {
       recognition.start();
     } else {
       console.log("Speech recognition not supported");
-      alert("Speech recognition is not supported in your browser");
+      toast("Feature Not Supported", {
+        description: "Speech recognition is not supported in your browser",
+        icon: <ShieldAlert className="h-4 w-4 text-destructive" />,
+        variant: "destructive"
+      });
     }
   };
 
@@ -148,19 +168,28 @@ const TryIt = () => {
         
         setCurrentlySpeaking(messageIndex);
         window.speechSynthesis.speak(utterance);
+
+        toast("Reading aloud", {
+          description: message.sender === 'hawa' ? 'HAWA is speaking' : 'AI response is being read',
+          icon: <Volume2 className="h-4 w-4 text-primary" />
+        });
       }
     } else {
-      alert("Text-to-speech is not supported in your browser");
+      toast("Feature Not Supported", {
+        description: "Text-to-speech is not supported in your browser",
+        icon: <ShieldAlert className="h-4 w-4 text-destructive" />,
+        variant: "destructive"
+      });
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="bg-gradient-to-br from-hawa-lavender via-hawa-pink to-hawa-coral pt-16">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <div className="bg-gradient-to-br from-hawa-lavender via-hawa-pink to-hawa-coral py-4">
         <Navbar />
       </div>
       
-      <div className="flex-grow flex h-[calc(100vh-4rem)]">
+      <div className="flex-grow flex h-full overflow-hidden">
         {/* Left: Control Panel */}
         <div 
           className={cn(
@@ -266,7 +295,7 @@ const TryIt = () => {
         </div>
         
         {/* Right: Chat Interface */}
-        <div className="flex flex-col h-full flex-1">
+        <div className="flex flex-col h-full flex-1 overflow-hidden">
           <div className="bg-white p-4 shadow-sm flex items-center justify-between border-b">
             <div className="flex items-center gap-2">
               <Button 
@@ -280,14 +309,24 @@ const TryIt = () => {
               <h3 className="font-semibold text-lg">Chat with Guardian</h3>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">Active</span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsSidebarVisible(!isSidebarVisible)} 
+                className="hidden md:flex"
+              >
+                {isSidebarVisible ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-600 font-medium">Active</span>
+              </div>
             </div>
           </div>
           
           {/* Chat messages with scroll */}
           <ScrollArea className="flex-1 p-4 bg-slate-50" ref={chatContainerRef}>
-            <div className="space-y-6 min-h-full">
+            <div className="space-y-6 min-h-full pb-4">
               {chatHistory.map((message, index) => (
                 <div key={index} className="relative group">
                   <ChatBubble
@@ -323,7 +362,7 @@ const TryIt = () => {
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   className="pr-10"
                 />
-                <Button 
+                <ButtonEffect 
                   variant="ghost" 
                   size="icon" 
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
@@ -333,11 +372,11 @@ const TryIt = () => {
                     "h-4 w-4", 
                     isListening ? "text-primary animate-pulse" : "text-slate-500"
                   )} />
-                </Button>
+                </ButtonEffect>
               </div>
-              <Button onClick={handleSendMessage}>
+              <ButtonEffect onClick={handleSendMessage}>
                 <Send className="w-4 h-4" />
-              </Button>
+              </ButtonEffect>
             </div>
             
             <div className="flex justify-between items-center text-xs text-slate-500 pt-3">

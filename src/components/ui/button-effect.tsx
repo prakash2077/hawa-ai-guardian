@@ -8,6 +8,7 @@ interface ButtonEffectProps extends React.ButtonHTMLAttributes<HTMLButtonElement
   size?: "default" | "sm" | "lg" | "icon";
   children: ReactNode;
   sparkles?: boolean;
+  asChild?: boolean;
 }
 
 export function ButtonEffect({
@@ -16,6 +17,7 @@ export function ButtonEffect({
   size = "default",
   children,
   sparkles = false,
+  asChild = false,
   ...props
 }: ButtonEffectProps) {
   return (
@@ -41,6 +43,7 @@ export function ButtonEffect({
         )}
         variant={variant}
         size={size}
+        asChild={asChild}
         {...props}
       >
         {children}
