@@ -6,12 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { useState } from "react";
+
+// Create a client (avoid creating a new QueryClient on every render)
+const queryClient = new QueryClient();
 
 const App = () => {
-  // Create a client inside the component to ensure hooks are called correctly
-  const [queryClient] = useState(() => new QueryClient());
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
