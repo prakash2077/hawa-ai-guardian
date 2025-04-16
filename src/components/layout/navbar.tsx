@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -17,11 +18,28 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   
+  const openTryIt = () => {
+    // Close mobile menu if open
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+    
+    // Check if the Try It section exists
+    const tryItSection = document.getElementById('try-it-section');
+    if (tryItSection) {
+      tryItSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Dispatch custom event that will be caught by the Index page
+      const event = new CustomEvent('openTryIt');
+      window.dispatchEvent(event);
+    }
+  };
+  
   return (
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled ? "py-2 bg-white/80 backdrop-blur-md shadow-sm" : "py-4 bg-transparent"
+        scrolled ? "py-2 bg-white/95 backdrop-blur-md shadow-sm" : "py-4 bg-transparent"
       )}
     >
       <div className="container px-4 mx-auto">
@@ -46,7 +64,7 @@ export function Navbar() {
               href="#walkthrough" 
               className={cn(
                 "font-medium transition-colors duration-300",
-                scrolled ? "text-slate-600 hover:text-primary" : "text-white/80 hover:text-white"
+                scrolled ? "text-slate-600 hover:text-primary" : "text-white hover:text-white"
               )}
             >
               How It Works
@@ -55,7 +73,7 @@ export function Navbar() {
               href="#features" 
               className={cn(
                 "font-medium transition-colors duration-300",
-                scrolled ? "text-slate-600 hover:text-primary" : "text-white/80 hover:text-white"
+                scrolled ? "text-slate-600 hover:text-primary" : "text-white hover:text-white"
               )}
             >
               Features
@@ -64,17 +82,17 @@ export function Navbar() {
               href="#why" 
               className={cn(
                 "font-medium transition-colors duration-300",
-                scrolled ? "text-slate-600 hover:text-primary" : "text-white/80 hover:text-white"
+                scrolled ? "text-slate-600 hover:text-primary" : "text-white hover:text-white"
               )}
             >
               Why HAWA
             </a>
-            <ButtonEffect size="sm">Try Demo</ButtonEffect>
+            <ButtonEffect size="sm" onClick={openTryIt}>Try It 💬</ButtonEffect>
           </nav>
           
           {/* Mobile Menu Button */}
           <button 
-            className="md:hidden text-slate-800"
+            className="md:hidden text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -113,7 +131,7 @@ export function Navbar() {
             >
               Why HAWA
             </a>
-            <ButtonEffect size="sm" className="w-full">Try Demo</ButtonEffect>
+            <ButtonEffect size="sm" className="w-full" onClick={openTryIt}>Try It 💬</ButtonEffect>
           </nav>
         </div>
       )}

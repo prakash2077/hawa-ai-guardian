@@ -1,13 +1,15 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HelpCircle, Info, Send, Shield, ShieldAlert, Star, X } from "lucide-react";
+import { HelpCircle, Info, Menu, Mic, Send, Shield, ShieldAlert, Star, Volume2, X } from "lucide-react";
 import { ChatBubble } from "@/components/ui/chat-bubble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface DemoModalProps {
   open: boolean;
@@ -28,6 +30,27 @@ export function DemoModal({ open, onOpenChange }: DemoModalProps) {
       content: "Welcome to HAWA Guardian! Ask me anything, and I'll ensure you get verified information.",
     }
   ]);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(window.innerWidth > 768);
+  const [isListening, setIsListening] = useState(false);
+  const [currentlySpeaking, setCurrentlySpeaking] = useState<number | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to bottom when new messages are added
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
+  
+  // Handle window resize for responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSidebarVisible(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const handleSendMessage = () => {
     if (!userMessage.trim()) return;
@@ -67,157 +90,276 @@ export function DemoModal({ open, onOpenChange }: DemoModalProps) {
     setUserMessage("");
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-full p-0 rounded-xl overflow-hidden">
-        <DialogHeader className="p-6 border-b">
-          <DialogTitle className="text-2xl font-sora">HAWA Guardian Demo</DialogTitle>
-        </DialogHeader>
+  // Voice-to-text functionality
+  const startListening = () => {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+      
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+        setUserMessage(transcript);
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      recognition.start();
+    } else {
+      alert("Speech recognition is not supported in your browser");
+    }
+  };
+
+  // Text-to-speech functionality
+  const speakMessage = (messageIndex: number) => {
+    if ('speechSynthesis' in window) {
+      // If already speaking, stop it
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        if (currentlySpeaking === messageIndex) {
+          setCurrentlySpeaking(null);
+          return;
+        }
+      }
+      
+      const message = chatHistory[messageIndex];
+      if (message.sender !== 'user') {
+        const utterance = new SpeechSynthesisUtterance(message.content);
+        utterance.rate = 1;
+        utterance.pitch = 1;
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 h-[80vh] max-h-[700px]">
-          {/* Left: Control Panel */}
-          <div className="glass p-6 overflow-y-auto border-r">
-            <h3 className="font-sora font-semibold text-xl mb-6 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              Guardian Control Panel
-            </h3>
-            
-            <div className="space-y-8">
-              {/* Sensitivity */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
-                    Guardian Sensitivity
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                  </label>
-                  <span className="text-sm font-medium">{sensitivity}%</span>
-                </div>
-                <Slider
-                  value={sensitivity}
-                  onValueChange={setSensitivity}
-                  max={100}
-                  step={1}
-                  className="py-1"
-                />
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Relaxed</span>
-                  <span>Balanced</span>
-                  <span>Strict</span>
-                </div>
-              </div>
-              
-              {/* Model Selection */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  AI Model
-                  <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                </label>
-                <Select defaultValue="gpt-4">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gpt-4">GPT-4 Turbo</SelectItem>
-                    <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
-                    <SelectItem value="claude">Claude 3 Opus</SelectItem>
-                    <SelectItem value="palm">Gemini Pro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Toggles */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
-                    Hallucination Detection
-                    <Info className="w-3.5 h-3.5 text-slate-400" />
-                  </label>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
-                    Real-time Fact-checking
-                    <Info className="w-3.5 h-3.5 text-slate-400" />
-                  </label>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
-                    Source References
-                    <Info className="w-3.5 h-3.5 text-slate-400" />
-                  </label>
-                  <Switch />
-                </div>
-              </div>
-              
-              {/* Response Style */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium flex items-center gap-1.5">
-                  Response Style
-                  <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                </label>
-                <Select defaultValue="balanced">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select style" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="detailed">Detailed Corrections</SelectItem>
-                    <SelectItem value="balanced">Balanced</SelectItem>
-                    <SelectItem value="minimal">Minimal Interventions</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        utterance.onend = () => {
+          setCurrentlySpeaking(null);
+        };
+        
+        setCurrentlySpeaking(messageIndex);
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      alert("Text-to-speech is not supported in your browser");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent className="max-w-full w-full p-0 rounded-xl overflow-hidden h-[90vh] sm:h-[80vh]" hideCloseButton>
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b flex items-center justify-between bg-white">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsSidebarVisible(!isSidebarVisible)} 
+                className="md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <h2 className="text-xl font-sora">HAWA Guardian Try It</h2>
             </div>
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
+              <X className="h-5 w-5" />
+            </Button>
           </div>
           
-          {/* Right: Chat Interface */}
-          <div className="flex flex-col h-full">
-            <div className="bg-white p-4 shadow-sm flex items-center justify-between border-b">
-              <h3 className="font-semibold text-lg">Chat with Guardian</h3>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-green-600 font-medium">Active</span>
+          <div className="flex flex-1 overflow-hidden">
+            {/* Left: Control Panel */}
+            <div 
+              className={cn(
+                "glass p-5 overflow-y-auto border-r transition-all",
+                isSidebarVisible ? "w-full md:w-80 lg:w-96" : "hidden md:block md:w-0 lg:w-0 md:p-0 overflow-hidden"
+              )}
+            >
+              <div className={cn("transition-opacity", !isSidebarVisible && "md:opacity-0")}>
+                <h3 className="font-sora font-semibold text-xl mb-6 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  Guardian Control Panel
+                </h3>
+                
+                <div className={cn("space-y-8", !isSidebarVisible && "md:hidden")}>
+                  {/* Sensitivity */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium flex items-center gap-1.5">
+                        Guardian Sensitivity
+                        <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                      </label>
+                      <span className="text-sm font-medium">{sensitivity}%</span>
+                    </div>
+                    <Slider
+                      value={sensitivity}
+                      onValueChange={setSensitivity}
+                      max={100}
+                      step={1}
+                      className="py-1"
+                    />
+                    <div className="flex justify-between text-xs text-slate-500">
+                      <span>Relaxed</span>
+                      <span>Balanced</span>
+                      <span>Strict</span>
+                    </div>
+                  </div>
+                  
+                  {/* Model Selection */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      AI Model
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                    </label>
+                    <Select defaultValue="gpt-4">
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gpt-4">GPT-4 Turbo</SelectItem>
+                        <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
+                        <SelectItem value="claude">Claude 3 Opus</SelectItem>
+                        <SelectItem value="palm">Gemini Pro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Toggles */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium flex items-center gap-1.5">
+                        Hallucination Detection
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                      </label>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium flex items-center gap-1.5">
+                        Real-time Fact-checking
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                      </label>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium flex items-center gap-1.5">
+                        Source References
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                      </label>
+                      <Switch />
+                    </div>
+                  </div>
+                  
+                  {/* Response Style */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      Response Style
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                    </label>
+                    <Select defaultValue="balanced">
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="detailed">Detailed Corrections</SelectItem>
+                        <SelectItem value="balanced">Balanced</SelectItem>
+                        <SelectItem value="minimal">Minimal Interventions</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50">
-              {chatHistory.map((message, index) => (
-                <ChatBubble
-                  key={index}
-                  sender={message.sender}
-                  content={message.content}
-                  status={message.sender === "ai" ? (message as any).status : undefined}
-                />
-              ))}
-            </div>
-            
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Ask about health, science, or any topic..."
-                  value={userMessage}
-                  onChange={(e) => setUserMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  className="flex-1"
-                />
-                <Button onClick={handleSendMessage}>
-                  <Send className="w-4 h-4" />
-                </Button>
+            {/* Right: Chat Interface */}
+            <div className="flex flex-col h-full flex-1">
+              <div className="bg-white p-4 shadow-sm flex items-center justify-between border-b">
+                <h3 className="font-semibold text-lg">Chat with Guardian</h3>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-green-600 font-medium">Active</span>
+                </div>
               </div>
               
-              <div className="flex justify-between items-center text-xs text-slate-500 pt-3">
-                <div className="flex items-center gap-1.5">
-                  <ShieldAlert className="w-4 h-4 text-primary" />
-                  <span>HAWA Guardian Active</span>
+              {/* Chat messages with scroll */}
+              <ScrollArea className="flex-1 p-4 bg-slate-50" ref={chatContainerRef}>
+                <div className="space-y-6 min-h-full">
+                  {chatHistory.map((message, index) => (
+                    <div key={index} className="relative group">
+                      <ChatBubble
+                        sender={message.sender}
+                        content={message.content}
+                        status={message.sender === "ai" ? message.status : undefined}
+                      />
+                      {message.sender !== "user" && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => speakMessage(index)}
+                        >
+                          <Volume2 className={cn(
+                            "h-4 w-4", 
+                            currentlySpeaking === index ? "text-primary animate-pulse" : "text-slate-500"
+                          )} />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  <Star className="w-3 h-3 text-slate-300" />
+              </ScrollArea>
+              
+              <div className="p-4 border-t bg-white">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      placeholder="Ask about health, science, or any topic..."
+                      value={userMessage}
+                      onChange={(e) => setUserMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                      className="pr-10"
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                      onClick={startListening}
+                    >
+                      <Mic className={cn(
+                        "h-4 w-4", 
+                        isListening ? "text-primary animate-pulse" : "text-slate-500"
+                      )} />
+                    </Button>
+                  </div>
+                  <Button onClick={handleSendMessage}>
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex justify-between items-center text-xs text-slate-500 pt-3">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldAlert className="w-4 h-4 text-primary" />
+                    <span>HAWA Guardian Active</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-3 h-3 text-slate-300" />
+                  </div>
                 </div>
               </div>
             </div>

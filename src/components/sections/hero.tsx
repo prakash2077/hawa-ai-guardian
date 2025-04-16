@@ -7,6 +7,15 @@ import { DemoModal } from "./demo-modal";
 export function HeroSection() {
   const [demoOpen, setDemoOpen] = useState(false);
   
+  const scrollToTryIt = () => {
+    const tryItSection = document.getElementById('try-it-section');
+    if (tryItSection) {
+      tryItSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      setDemoOpen(true);
+    }
+  };
+  
   return (
     <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-28">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#e5deff_1px,transparent_1px),linear-gradient(to_bottom,#e5deff_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
@@ -41,7 +50,7 @@ export function HeroSection() {
               onClick={() => setDemoOpen(true)}
             >
               <span className="flex items-center gap-2">
-                Try the Demo 💬
+                Try It 💬
               </span>
             </ButtonEffect>
             <ButtonEffect size="lg" variant="outline">
@@ -59,7 +68,7 @@ export function HeroSection() {
                   <div className="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center mb-4 animate-bounce-gentle">
                     <Shield className="w-8 h-8 text-primary" />
                   </div>
-                  <p className="text-xl font-sora font-semibold">HAWA Guardian Demo</p>
+                  <p className="text-xl font-sora font-semibold">HAWA Guardian Try It</p>
                 </div>
               </div>
             </div>
