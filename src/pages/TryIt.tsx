@@ -185,9 +185,9 @@ const TryIt = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <div className="bg-gradient-to-br from-hawa-lavender via-hawa-pink to-hawa-coral py-4">
+      {/* <div className="bg-gradient-to-br from-hawa-lavender via-hawa-pink to-hawa-coral py-4">
         <Navbar />
-      </div>
+      </div> */}
       
       <div className="flex-grow flex h-full overflow-hidden">
         {/* Left: Control Panel */}
