@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,18 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ButtonEffect } from "@/components/ui/button-effect";
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: "AIzaSyDnBZ7hn0GVjMGoeUD_UA3hs6BcP9GCzhA" });
+
+async function ask_gemini(prompt) {
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: prompt,
+  });
+  console.log(response.text);
+  return response;
+}
 
 type ChatMessage = 
   | { sender: "user"; content: string }
@@ -49,48 +60,68 @@ const TryIt = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
-    
-    // Add user message to chat
-    setChatHistory(prev => [...prev, {
-      sender: "user",
-      content: userMessage
-    }]);
-    
-    // Simulate AI response with hallucination
-    setTimeout(() => {
-      setChatHistory(prev => [...prev, {
-        sender: "ai",
-        content: "Studies show that drinking alkaline water during pregnancy can reduce morning sickness by 75% and boost your immune system significantly.",
-        status: "hallucination"
-      }]);
-      
-      // Simulate HAWA correction
-      setTimeout(() => {
-        setChatHistory(prev => [...prev, {
-          sender: "hawa",
-          content: "⚠️ The previous response contains unverified claims about alkaline water benefits during pregnancy. There is limited scientific evidence supporting these specific benefits for pregnant women."
-        }]);
-        
-        // Simulate corrected AI response
-        setTimeout(() => {
-          setChatHistory(prev => [...prev, {
-            sender: "ai",
-            content: "While alkaline water is generally considered safe to drink during pregnancy, there is limited scientific evidence for specific benefits like reducing morning sickness or boosting immune function. It's important to maintain proper hydration during pregnancy, but regular water is equally effective. Always consult with your healthcare provider about dietary changes during pregnancy.",
-            status: "verified"
-          }]);
 
-          // Show toast notification
-          toast("Guardian has identified and corrected a potential hallucination", {
-            description: "HAWA verified the information for accuracy",
-            icon: <Shield className="h-4 w-4 text-primary" />
-          });
-        }, 1500);
-      }, 1500);
-    }, 1000);
-    
+    // Store the user message in a variable
+    const messageToSend = userMessage;
+
+    // Add user message to chat
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        sender: "user",
+        content: messageToSend,
+      },
+    ]);
+
+    // Clear the input field
     setUserMessage("");
+
+    try {
+      // Send the message to the Gemini API and await the response
+      const geminiResponse = await ask_gemini(messageToSend);
+
+      // Extract the response text
+      const generatedResponse = geminiResponse.text;
+
+      // Add the Gemini API response to the chat
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          content: generatedResponse, // Use the `text` field from the response
+        },
+      ]);
+
+      // Prepare the JSON object
+      const payload = {
+        prompt: messageToSend,
+        response: generatedResponse,
+      };
+
+      // Send the POST request to your Railway backend
+      const logResponse = await fetch("https://hallucination-detector.onrender.com/api/trust", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      console.log("Logging response:", logResponse);
+      if (!logResponse.ok) {
+        console.error("Failed to log the prompt and response to the API");
+      }
+    } catch (error) {
+      console.error("Error during message handling:", error);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "hawa",
+          content: "⚠️ Unable to fetch a response from the Gemini API. Please try again later.",
+        },
+      ]);
+    }
   };
 
   // Voice-to-text functionality
@@ -365,7 +396,7 @@ const TryIt = () => {
                 <ButtonEffect 
                   variant="ghost" 
                   size="icon" 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                  className="absolute right-2 top-1/10 -translate-y-full h-8 w-8"
                   onClick={startListening}
                 >
                   <Mic className={cn(
