@@ -117,14 +117,16 @@ const TryIt = () => {
 
       // Extract the trustworthiness score
       const confidenceScore = responseData.trustworthiness_score?.trustworthiness_score;
-
+      const formattedConfidenceScore = confidenceScore !== undefined 
+        ? Math.round(confidenceScore * 10000) / 100 
+        : undefined;
       // Add the confidence score to the chat
-      if (confidenceScore !== undefined) {
+      if (formattedConfidenceScore !== undefined) {
         setChatHistory((prev) => [
           ...prev,
           {
             sender: "ai",
-            content: `Confidence Score: ${confidenceScore}`,
+            content: `Confidence Score: ${formattedConfidenceScore}%`,
           },
         ]);
       }
