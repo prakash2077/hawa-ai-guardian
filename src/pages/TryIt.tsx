@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { ButtonEffect } from "@/components/ui/button-effect";
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_GOOGLE_GENAI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: "AIzaSyDnBZ7hn0GVjMGoeUD_UA3hs6BcP9GCzhA" });
 
 async function ask_gemini(prompt) {
   const response = await ai.models.generateContent({
