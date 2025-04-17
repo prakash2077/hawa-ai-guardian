@@ -100,7 +100,7 @@ const TryIt = () => {
         response: generatedResponse,
       };
 
-      // Send the POST request to your Railway backend
+      // Send the POST request to your backend
       const logResponse = await fetch("https://hallucination-detector.onrender.com/api/trust", {
         method: "POST",
         headers: {
@@ -108,9 +108,25 @@ const TryIt = () => {
         },
         body: JSON.stringify(payload),
       });
-      console.log("Logging response:", logResponse);
+
+      const responseData = await logResponse.json();
+
       if (!logResponse.ok) {
         console.error("Failed to log the prompt and response to the API");
+      }
+
+      // Extract the trustworthiness score
+      const confidenceScore = responseData.trustworthiness_score?.trustworthiness_score;
+
+      // Add the confidence score to the chat
+      if (confidenceScore !== undefined) {
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            sender: "ai",
+            content: `Confidence Score: ${confidenceScore}`,
+          },
+        ]);
       }
     } catch (error) {
       console.error("Error during message handling:", error);
